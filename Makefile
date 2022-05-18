@@ -27,7 +27,7 @@ SFML_PATH = $(LIB_PATH)SFML/
 
 CC = g++
 
-CFLAGS = 
+CFLAGS =  -g
 
 RM = rm -rf
 
