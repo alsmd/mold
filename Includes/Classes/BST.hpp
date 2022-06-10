@@ -51,11 +51,17 @@ struct Circle{
 class Input{
 	private:
 		sf::RectangleShape	body;
-		std::string			buffer;
-		bool				hasFocus;
+		sf::Text			text;
+	sf::Font		font;
 	public:
+		bool				hasFocus;
+		std::string			buffer;
 
 		Input(float width, float height){
+			this->font.loadFromFile("./fonts/Roboto-Black.ttf");
+			this->text.setFillColor(sf::Color::Black);
+			this->text.setFont(this->font);
+			this->text.setCharacterSize(30);
 			this->body.setFillColor(sf::Color::White);
 			this->body.setSize(sf::Vector2f(width, height));
 			this->hasFocus = false;
@@ -65,13 +71,27 @@ class Input{
 
 		}
 
+		std::string getBuffer(){
+			std::string r = this->buffer;
+			this->buffer.clear();
+			return (r);
+		}
+
 		void setPosition(float x, float y){
 			this->body.setPosition(sf::Vector2f(x - this->body.getSize().x / 2, y - this->body.getSize().y / 2));
+			this->text.setPosition(sf::Vector2f(
+				this->body.getPosition().x + (this->body.getSize().x / 2) - (this->text.getGlobalBounds().width / 2),
+				this->body.getPosition().y + (this->body.getSize().y / 2) - (this->text.getGlobalBounds().height / 2)
+			));
 		}
 
 
-		void update(){
-			if (this->body.getGlobalBounds().contains(sf::Mouse::getPosition().x, sf::Mouse::getPosition().y)){
+		void update(sf::RenderWindow *window){
+			this->text.setPosition(sf::Vector2f(
+				this->body.getPosition().x + (this->body.getSize().x / 2) - (this->text.getGlobalBounds().width / 2),
+				this->body.getPosition().y + (this->body.getSize().y / 2) - (this->text.getGlobalBounds().height / 2)
+			));
+			if (this->body.getGlobalBounds().contains(sf::Mouse::getPosition(*window).x, sf::Mouse::getPosition(*window).y)){
 				if (sf::Mouse::isButtonPressed(sf::Mouse::Left)){
 					this->hasFocus = true;
 					std::cout << "Input ta com Focus\n";
@@ -82,10 +102,29 @@ class Input{
 					std::cout << "Input perdeu o Focus\n";
 				}
 			}
+			if (this->hasFocus){
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace)){
+					if (this->buffer.length() - 1 > 0){
+						this->buffer.erase(this->buffer.length() - 1);
+					}
+				}
+			}
+		}
+
+		void getInput(sf::Event e){
+			if (e.type == sf::Event::TextEntered){
+				if (this->hasFocus && std::isalnum(e.text.unicode)){
+					char tmp[1] = {e.text.unicode};
+					this->buffer.append(tmp);
+				}
+			}
+			
 		}
 
 		void render(sf::RenderTarget *target){
+			this->text.setString(this->buffer);
 			target->draw(this->body);
+			target->draw(this->text);
 		}
 };
 
@@ -99,7 +138,7 @@ private:
 	sf::RenderWindow						*window;
 	ft::Input								input;
 	// ft::BinarySearchTree<int>				tree;
-	ft::RedBlackTree<int>					tree;
+	ft::RedBlackTree<int, int>				tree;
 	sf::CircleShape							view;
 	ft::Circle								circle;
 	// sf::RectangleShape						background;
@@ -119,7 +158,7 @@ public:
 	void		update();
 	void		render();
 	void		run();
-	void		drawTree(ft::Node<int> *node, float x, float y);
+	void		drawTree(ft::Node<int, int> *node, float x, float y);
 	void		drawLine(float x1, float y1, float x2, float y2);
 	void		updateKeys();
 

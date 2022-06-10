@@ -27,12 +27,10 @@ void	BST::initWindow()
 
 //Constructor / Destroctor
 
-BST::BST() : input(500, 50)
+BST::BST() : input(500, 50), tree()
 {
 	this->initWindow();
 	this->input.setPosition(this->window->getSize().x / 2, 50);
-	for (int i = 0; i < 5; i++)
-		this->tree.insert(i + 1);
 /* 	this->background.setSize(sf::Vector2f(this->window->getSize().x, this->window->getSize().y));
 	this->background.setFillColor(sf::Color::White); */
 }
@@ -56,14 +54,25 @@ void	BST::run()
 }
 
 void	BST::updateKeys(){
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+	if (!this->input.hasFocus && sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 		this->view.move(sf::Vector2f(0, -100 * this->dt));
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+	if (!this->input.hasFocus && sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 		this->view.move(sf::Vector2f(0, 100 * this->dt));
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+	if (!this->input.hasFocus && sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		this->view.move(sf::Vector2f(-100 * this->dt, 0));
-	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+	if (!this->input.hasFocus && sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		this->view.move(sf::Vector2f(100 * this->dt, 0));
+	if (this->input.hasFocus && sf::Keyboard::isKeyPressed(sf::Keyboard::Enter)){
+		int value = std::atoi((this->input.getBuffer()).c_str());
+		if (value == 0)
+			return ;
+		if (this->tree.find(value))
+			this->tree.remove(value);
+		else
+			this->tree.insert(value);
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+		this->window->close();
 }
 
 
@@ -72,7 +81,7 @@ void	BST::update()
 	std::string buffer;
 	int			value;
 
-	this->input.update();
+	this->input.update(this->window);
 	this->updateSFMLEvents();
 	this->updateKeys();
 
@@ -87,7 +96,7 @@ void	BST::update()
 		std::cin >> value;
 		this->tree.remove(value);
 	} */
-
+	
 
 }
 
@@ -101,16 +110,17 @@ void	BST::updateSFMLEvents()
 {
 	while (this->window->pollEvent(this->sfEvent))
 	{
+		this->input.getInput(this->sfEvent);
 		if (this->sfEvent.type == sf::Event::Closed)
 			this->window->close(); 
 	}
 }
 
-void	BST::drawTree(ft::Node<int> *node, float x, float y){
+void	BST::drawTree(ft::Node<int, int> *node, float x, float y){
 	if (node == NULL)
 		return ;
 	std::stringstream	buffer;
-	buffer << node->value;
+	buffer << node->value->first;
 	if (node->color == ft::Color::Black)
 		this->circle.shape.setFillColor(sf::Color::Cyan);
 	else
@@ -121,11 +131,12 @@ void	BST::drawTree(ft::Node<int> *node, float x, float y){
 	if (node->left)
 		this->drawLine(x + 15 + this->view.getPosition().x,  y + 15 + this->view.getPosition().y,  (x - ((this->n % 2 == 0) ? 50 : 100)) + 15 + this->view.getPosition().x, y + 80 + 15 + this->view.getPosition().y);
 	this->circle.draw(*this->window);
-	this->drawTree(node->left, x - ((this->n % 2 == 0) ? 50 : 100), y + 80);
+	if (node->value->first != 31)
+		this->drawTree(node->left, x - ((this->n % 2 == 0) ? 50 : 100), y + 80);
 	this->n = holder;
 	if (node->right)
 		this->drawLine(x +15 + this->view.getPosition().x, y + 15 + this->view.getPosition().y,  (x + ((this->n % 2 == 0) ? 50 : 100)) + 15 + this->view.getPosition().x, (y + 80) + 15 + this->view.getPosition().y);
-	this->drawTree(node->right, x + ((this->n % 2 == 0) ? 50 : 100), y + 80);
+		this->drawTree(node->right, x + ((this->n % 2 == 0) ? 50 : 100), y + 80);
 }
 
 void	BST::drawLine(float x1, float y1, float x2, float y2){
